@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard</title>
+	<link rel="stylesheet" href="/static/css/dashboard.css">
+
+</head>
+<body>
+	<h1>Welcome to your dashboard, {{ username }}!</h1>
+	<p>This is your personal dashboard.</p>
+
+	<!-- "My Profile" link -->
+	<a href="#" onclick="fetchProfile()">My Profile</a>
+	<!-- "Create Shipment" link -->
+	<a href="/create/shipment">Create Shipment</a>
+	<!-- "my shipments" link -->
+	<a href= "/view/shipments" > My Shipments</a>
+	<!--logout link-->
+	<a href="#" onclick = "userLogout()">Logout</a>
+	<script src="/static/js/my_profile.js">
+	</script>
+	<script src="/static/js/logout.js">
+	</script>
+</body>
+</html>

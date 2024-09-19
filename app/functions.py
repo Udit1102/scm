@@ -1,10 +1,35 @@
 from models import UserInDB
 from passlib.context import CryptContext
 from database import db
+from dotenv import load_dotenv
+import os
+import requests
+
+
+load_dotenv
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+
+
 #initializing the password context
 pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 #defining functions
+
+#google recaptcha function
+
+def verify_recaptcha(recaptcha_response: str):
+	payload = {
+		'secret': RECAPTCHA_SECRET_KEY,
+		'response': recaptcha_response
+	}
+	
+	# Send the request to Google's reCAPTCHA API
+	response = requests.post("https://www.google.com/recaptcha/api/siteverify", data=payload)
+	result = response.json()
+	
+	# Return whether the reCAPTCHA was successful
+	return result.get("success", False)
+
 ##function for password hashing and verification
 
 def hash_password(password):
