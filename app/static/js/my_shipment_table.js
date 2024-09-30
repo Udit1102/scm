@@ -21,7 +21,7 @@ async function fetchShipments() {
 			alert(error.detail);
 		}
 		else {
-			alert("Failed to fetch shipments- Not found");
+			alert("Failed to fetch shipments");
 		}
 	} catch (error) {
 		console.error('Error fetching shipments:', error);

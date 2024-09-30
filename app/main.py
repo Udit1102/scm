@@ -17,6 +17,7 @@ from models import ShipmentCreation, User, UserInDB, Token, TokenData, LoginRequ
 from database import db
 from functions import get_user, hash_password, password_verification, create_user, authenticate_user, verify_recaptcha
 from security import send_mail_for_reset_password, create_access_token, get_current_user, verify_reset_password_token
+from consumer import message_consumption
 
 #access token time
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -161,7 +162,34 @@ async def read_own_shipments(
 		raise HTTPException(status_code=404, detail="No shipments found for the user")
 	return shipment_details
 
+#logout end point
 @app.post("/logout")
 def logout(response: Response, request: Request):
 	response.delete_cookie(key = 'access_token')
 	return {"message": "Logout successful"}
+
+#data stream end point
+@app.get("/datastream_page", response_class=HTMLResponse)
+def datastream_page(request: Request):
+
+	return templates.TemplateResponse("datastream_2.html", {"request": request})
+
+@app.get("/datastream")
+async def data_stream(current_user: Annotated[User, Depends(get_current_user)], request: Request):
+	if current_user.role == "User":
+		#raise HTTPException(status_code=401, detail="Not Authorized")
+		result = "Not Authorized 401"
+	else:
+		message = message_consumption()
+		print(datetime.now().time().strftime("%H:%M:%S"))
+		data_stream_collection = db['data_stream']
+		await data_stream_collection.insert_many(message)
+		result = data_stream_collection.find({}, {"_id": 0})
+		result = await result.to_list(length=None)
+	return templates.TemplateResponse("datastream.html", {"request": request, "result": result})
+
+'''
+@app.get("/stopdatastream")
+def stop_data_stream():
+	stop_stream()
+'''
