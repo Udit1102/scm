@@ -1,38 +1,44 @@
+import os
 import socket
 import json
-from random import randint
+from dotenv import load_dotenv
+from random import random
 import time
 
+#server port
+load_dotenv()
+SERVER_PORT = os.getenv("SERVER_PORT")
 
+#intializing the socket
 s = socket.socket()
 print("Socket Created")
-s.bind(('',12345))
+s.bind(('',int(SERVER_PORT)))
 s.listen(3)
 print("waiting for connections")
 c, addr = s.accept()
 
-
-data =[{
-"Battery_Level":3.52,
+while True:
+	try:
+		data =[{
+"Battery_Level": 3.57,
  "Device_Id":1156053076,
- "First_Sensor_temperature":19.4 ,
+ "First_Sensor_temperature":28,
  "Route_From":"Hyderabad, India",
  "Route_To":"Louisville, USA"
  },
 {
-"Battery_Level":2.57,
+"Battery_Level":2.8,
  "Device_Id":1156053077,
- "First_Sensor_temperature":20.4 ,
+ "First_Sensor_temperature":48,
  "Route_From":"Banglore, India",
  "Route_To":"Louisville, USA"
 }]
-while True:
-    try:
-        print("connected with", addr)
-        userdata = (json.dumps(data)+"\n").encode('utf-8')
-        print(userdata)
-        c.send(userdata)
-        time.sleep(100)
-    except Exception as e:
-        print(e)
+
+		print("connected with", addr)
+		userdata = (json.dumps(data)+"\n").encode('utf-8')
+		print(userdata)
+		c.send(userdata)
+		time.sleep(10)
+	except Exception as e:
+		print(e)
 c.close()

@@ -8,27 +8,26 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from jwt import InvalidTokenError
 from typing_extensions import Annotated
 from dotenv import load_dotenv
 import os
 
-from models import ShipmentCreation, User, UserInDB, Token, TokenData, LoginRequest, ResetPassword, NewPassword
-from database import db
-from functions import get_user, hash_password, password_verification, create_user, authenticate_user, verify_recaptcha
-from security import send_mail_for_reset_password, create_access_token, get_current_user, verify_reset_password_token
-from consumer import message_consumption
+from app.models import ShipmentCreation, User, UserInDB, Token, TokenData, LoginRequest, ResetPassword, NewPassword
+from app.database import db
+from app.functions import get_user, hash_password, password_verification, create_user, authenticate_user, verify_recaptcha
+from app.security import send_mail_for_reset_password, create_access_token, get_current_user, verify_reset_password_token
 
 #access token time
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+load_dotenv()
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 app = FastAPI()
 
 # Set up the Jinja2 template directory
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # Mount the 'static' folder for serving static files 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 #cors
 from fastapi.middleware.cors import CORSMiddleware
@@ -177,13 +176,11 @@ def datastream_page(request: Request):
 @app.get("/datastream")
 async def data_stream(current_user: Annotated[User, Depends(get_current_user)], request: Request):
 	if current_user.role == "User":
-		#raise HTTPException(status_code=401, detail="Not Authorized")
+		raise HTTPException(status_code=401, detail="Not Authorized")
 		result = "Not Authorized 401"
 	else:
-		message = message_consumption()
 		print(datetime.now().time().strftime("%H:%M:%S"))
 		data_stream_collection = db['data_stream']
-		await data_stream_collection.insert_many(message)
 		result = data_stream_collection.find({}, {"_id": 0})
 		result = await result.to_list(length=None)
 	return templates.TemplateResponse("datastream.html", {"request": request, "result": result})

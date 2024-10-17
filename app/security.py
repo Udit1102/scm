@@ -1,10 +1,10 @@
-from models import TokenData, NewPassword
-from functions import get_user
-from database import db
+from app.models import TokenData, NewPassword
+from app.functions import get_user
+from app.database import db
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
-from jwt import InvalidTokenError
+#from jwt import InvalidTokenError
 
 import jwt
 

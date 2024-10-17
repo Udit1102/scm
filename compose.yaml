@@ -1,0 +1,71 @@
+services:
+  web_app:
+    image: udit1102/scm_web_app:latest
+    ports:
+      - "8000:5000"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_HEAP_OPTS: '-Xms4g -Xmx4g'
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_HEAP_OPTS: '-Xms2g -Xmx2g'
+      
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_LOCALHOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_LOCALHOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    image: udit1102/scm_server_app:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 12345
+    command: ["python", "./server.py"]
+    ports:
+      - "12345:12345"
+
+  producer:
+    image: udit1102/scm_producer_app:latest
+    depends_on:
+      - kafka
+      - server
+    environment:
+      BROKER_ADDRESS: kafka:29092
+      HOST_ADDRESS: server
+      SERVER_PORT: 12345
+    command: ["python", "./producer.py"]
+  consumer:
+    image: udit1102/scm_consumer_app:latest
+    depends_on:
+      - kafka
+      - producer
+    environment:
+      BROKER_ADDRESS: kafka:29092
+    command: ["python", "./consumer.py"]

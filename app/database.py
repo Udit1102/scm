@@ -14,13 +14,13 @@ db_encoded_password = urllib.parse.quote(db_password)
 #connection string
 
 mongo_uri = f"mongodb+srv://{db_user}:{db_encoded_password}@scm.oduo3.mongodb.net/?retryWrites=true&w=majority&appName=SCM"
-print(mongo_uri)
 
 # Create an AsyncIOMotorClient instance
 client = AsyncIOMotorClient(mongo_uri)
 
 # Access a specific database
 db = client['my_scm']
+print("database connection successful")
 
 '''
 user_collection = db['user']

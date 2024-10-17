@@ -1,6 +1,6 @@
-from models import UserInDB
+from app.models import UserInDB
 from passlib.context import CryptContext
-from database import db
+from app.database import db
 from dotenv import load_dotenv
 import os
 import requests
