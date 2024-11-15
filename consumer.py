@@ -19,7 +19,7 @@ try:
 # Connection string
 	mongo_uri = f"mongodb+srv://{db_user}:{db_encoded_password}@scm.oduo3.mongodb.net/?retryWrites=true&w=majority&appName=SCM"
 
-# Create an AsyncIOMotorClient instance
+# Create an pymongo Client instance
 	client = pymongo.MongoClient(mongo_uri)
 
 # Access a specific database

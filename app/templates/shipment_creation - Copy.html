@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Create Shipment</title>
+	<link rel="stylesheet" href="/static/css/shipment_creation.css">
+</head>
+<body>
+	<h1>Create a New Shipment</h1>
+	<form id="shipment-form">
+		<label for="shipment_no">Shipment No:*</label>
+		<input type="text" id="shipment_no" name="shipment_no" required>
+		<br>
+		<label for="container_no">Container No:*</label>
+		<input type="text" id="container_no" name="container_no" required>
+		<br>
+
+		<label for="route">Route:</label>
+		<input type="text" id="route" name="route">
+		<br>
+
+		<label for="goods_type">Goods Type:</label>
+		<input type="text" id="goods_type" name="goods_type">
+		<br>
+
+		<label for="expected_delivery_date">Expected Delivery Date:</label>
+		<input type="text" id="expected_delivery_date" name="expected_delivery_date">
+		<br>
+
+		<label for="po_no">PO No:*</label>
+		<input type="text" id="po_no" name="po_no" required>
+		<br>
+
+		<label for="device">Device:</label>
+		<input type="text" id="device" name="device">
+		<br>
+
+		<label for="delivery_no">Delivery No:*</label>
+		<input type="text" id="delivery_no" name="delivery_no" required>
+		<br>
+
+		<label for="ndc_no">NDC No:*</label>
+		<input type="text" id="ndc_no" name="ndc_no" required>
+		<br>
+
+		<label for="batch_id">Batch ID:*</label>
+		<input type="text" id="batch_id" name="batch_id" required>
+		<br>
+
+		<label for="serial_no">Serial No:*</label>
+		<input type="text" id="serial_no" name="serial_no" required>
+		<br>
+
+		<label for="shipment_description">Shipment Description:*</label>
+		<input type="text" id="shipment_description" name="shipment_description" required>
+
+		<br>
+
+		<button type="submit" >Create Shipment</button>
+	</form>
+	<a href="/dashboard">Go Back</a>
+
+	<script src="/static/js/shipment_creation.js"></script>
+</body>
+</html>

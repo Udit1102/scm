@@ -7,7 +7,7 @@ class User(BaseModel):
 	first_name: str
 	last_name: str
 	username: str
-	role: str= "User"
+	role: Union[str, None] = "User"
 
 class UserInDB(User):
     hashed_password: str

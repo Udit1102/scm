@@ -3,7 +3,6 @@ from typing import Union
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status, Request, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -47,10 +46,10 @@ async def get_signup_page(request: Request):
 
 @app.post("/register")
 async def user_registration(user: UserInDB):
-	if await get_user(db, user.username):
+	if await get_user(db, user.username.lower()):
 		raise HTTPException(status_code = 400, detail= "This email already exists")
 	hashed = hash_password(user.hashed_password)
-	user_details = {"first_name": user.first_name, "last_name": user.last_name, "username": user.username, "hashed_password": hashed, "role": user.role}
+	user_details = {"first_name": user.first_name, "last_name": user.last_name, "username": user.username.lower(), "hashed_password": hashed, "role": user.role.capitalize()}
 	await create_user(user_details)
 	return {"message": "Registration successful", "status_code": 200}
 
@@ -72,20 +71,19 @@ async def login_for_access_token(
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
 			detail="Incorrect username or password",
-			headers={"WWW-Authenticate": "Bearer"},
 		)
 	access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 	access_token = create_access_token(
 		data={"sub": user.username}, expires_delta=access_token_expires
 	)
-	#return Token(access_token=access_token, token_type="bearer", username = user.username)
 	# Set the cookie on the response
 	response.set_cookie(
 		key="access_token", 
 		value=access_token, 
-		max_age=3600,  # Cookie expires after 1 hour
+		max_age=1800,  # Cookie expires after 30 min
 		httponly=True,  # The cookie is HTTP-only
 		secure=False,
+		samesite="lax"
 	)
 	return {"message": "Login successful"}
 
@@ -96,25 +94,26 @@ def forgot_password_page(request: Request):
 	return templates.TemplateResponse("forgot_password.html", {"request": request})
 
 @app.post("/reset_password")
-async def reset_password(email: ResetPassword):
+async def reset_password(email: ResetPassword, request: Request):
+	base_url = str(request.base_url)
 	if not (await get_user(db, email.email)):
 		raise HTTPException(status_code = 404, detail= "This email does not exists")
-	access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-	access_token = create_access_token(data={"sub": email.email}, expires_delta=access_token_expires)
-	return send_mail_for_reset_password(email.email, access_token)
+	reset_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+	reset_token = create_access_token(data={"sub": email.email}, expires_delta=reset_token_expires)
+	return send_mail_for_reset_password(base_url, email.email, reset_token)
 
 #serving the new password creation
 
 @app.get("/newpassword/page/", response_class= HTMLResponse)
 def new_password_page(request: Request, token: str):
-	return templates.TemplateResponse("new_password.html", {"request": request, "token": token})
+	return templates.TemplateResponse("new_password.html", {"request": request, "token":token})
 
 @app.post("/create/newpassword/")
-async def create_new_password(data: NewPassword):
+async def create_new_password(data: NewPassword, request: Request):
 	user = await verify_reset_password_token(data.token)
 	user_collection = db['user']
 	hashed = hash_password(data.new_password)
-	update_password = await user_collection.update_one({"username": user.username}, {"$set": {"hash_password": hashed}})
+	update_password = await user_collection.update_one({"username": user.username}, {"$set": {"hashed_password": hashed}})
 	return {"message": "Your password is updated, please proceed to login"}
 
 #serving the dashboard
@@ -163,30 +162,48 @@ async def read_own_shipments(
 
 #logout end point
 @app.post("/logout")
-def logout(response: Response, request: Request):
+def logout(response: Response):
 	response.delete_cookie(key = 'access_token')
 	return {"message": "Logout successful"}
 
 #data stream end point
 @app.get("/datastream_page", response_class=HTMLResponse)
-def datastream_page(request: Request):
-
-	return templates.TemplateResponse("datastream_2.html", {"request": request})
+def datastream_page(request: Request, current_user: Annotated[User, Depends(get_current_user)]):
+	if current_user.role.capitalize() == "User":
+		#raise HTTPException(status_code=401, detail="Not Authorized")
+		#result = "Not Authorized 401"
+		return templates.TemplateResponse("error.html", {"request": request, "status_code": 401, "message": "You are not authorized"})
+	return templates.TemplateResponse("datastream.html", {"request": request})
 
 @app.get("/datastream")
 async def data_stream(current_user: Annotated[User, Depends(get_current_user)], request: Request):
-	if current_user.role == "User":
-		raise HTTPException(status_code=401, detail="Not Authorized")
-		result = "Not Authorized 401"
+	if current_user.role.capitalize() == "User":
+		#raise HTTPException(status_code=401, detail="Not Authorized")
+		#result = "Not Authorized 401"
+		return templates.TemplateResponse("error.html", {"request": request, "status_code": 401, "message": "You are not authorized"})
 	else:
-		print(datetime.now().time().strftime("%H:%M:%S"))
 		data_stream_collection = db['data_stream']
-		result = data_stream_collection.find({}, {"_id": 0})
+		result = data_stream_collection.find({}, {"_id": 0}).sort([("$natural", -1)]).limit(50)
 		result = await result.to_list(length=None)
-	return templates.TemplateResponse("datastream.html", {"request": request, "result": result})
+	return result
 
-'''
-@app.get("/stopdatastream")
-def stop_data_stream():
-	stop_stream()
-'''
+#creating user end point
+@app.get("/user_creation_page", response_class=HTMLResponse)
+def user_creation_page(request: Request, current_user: Annotated[User, Depends(get_current_user)]):
+	if current_user.role.capitalize() == "User":
+		#raise HTTPException(status_code=401, detail="Not Authorized")
+		#result = "Not Authorized 401"
+		return templates.TemplateResponse("error.html", {"request": request, "status_code": 401, "message": "You are not authorized"})
+	return templates.TemplateResponse("user_creation.html", {"request": request})
+
+@app.post("/createuser")
+async def user_creation(user: UserInDB, current_user: Annotated[User, Depends(get_current_user)], request:Request):
+	if current_user.role.capitalize() == "User":
+		#raise HTTPException(status_code=401, detail="Not Authorized")
+		return templates.TemplateResponse("error.html", {"request": request, "status_code": 401, "message": "You are not authorized"})
+	if await get_user(db, user.username.lower()):
+		raise HTTPException(status_code = 400, detail= "This email already exists")
+	hashed = hash_password(user.hashed_password)
+	user_details = {"first_name": user.first_name, "last_name": user.last_name, "username": user.username.lower(), "hashed_password": hashed, "role": user.role.capitalize()}
+	await create_user(user_details)
+	return {"message": "User created successfully", "status_code": 200}

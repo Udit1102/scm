@@ -1,7 +1,7 @@
 async function fetchShipments() {
 	try {
 		// Fetch shipments from backend
-		const response = await fetch('http://127.0.0.1:8000/users/shipments/', {
+		const response = await fetch('/users/shipments/', {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json'

@@ -4,13 +4,11 @@ from app.database import db
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
-#from jwt import InvalidTokenError
-
+from jwt import InvalidTokenError
 import jwt
 
 from fastapi import Depends, FastAPI, HTTPException, status, Request, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
+from urllib.parse import urljoin
 from dotenv import load_dotenv
 import os
 import smtplib
@@ -24,10 +22,9 @@ app_password = os.getenv("app_password")
 #fetching secret key info
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-
-def send_mail_for_reset_password(receiver_mail: str, reset_token: str):
+def send_mail_for_reset_password(base_url, receiver_mail: str, reset_token: str):
 	try:
 		#validating user email
 		valid = validate_email(receiver_mail)
@@ -39,14 +36,25 @@ def send_mail_for_reset_password(receiver_mail: str, reset_token: str):
 		sender_password = app_password
 		#mail content
 		subject = "reset password request"
-		reset_url = f"http://127.0.0.1:8000/newpassword/page/?token={reset_token}"
-		body = f"Hi,\n\nClick the following link to reset your password: {reset_url}\n\nIf you did not request this, please ignore the email."
+		reset_url = urljoin(base_url,f"/newpassword/page/?token={reset_token}")
+		body = f"""
+<html>
+		<body>
+			<p>Hi,</p>
+			<p>Click the following link to reset your password: 
+				<a href="{reset_url}">click here</a>
+			</p>
+			<p>Note: This link is valid only for the next 30 minutes.</p>
+			<p>If you did not request this, please ignore the email.</p>
+		</body>
+</html>
+"""
 		#mail creation
 		message = MIMEMultipart()
 		message["From"] = sender_mail
 		message["To"] = receiver_mail
 		message["Subject"] = subject
-		message.attach(MIMEText(body, "plain"))
+		message.attach(MIMEText(body, "html"))
 		#sending mail
 		with smtplib.SMTP(smtp_server, smtp_port) as server:
 			server.starttls()
@@ -75,31 +83,30 @@ async def get_current_user(request: Request):
 	token = request.cookies.get("access_token")  # Extract the token from the cookie
 	if not token:
 		raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+			status_code=status.HTTP_401_UNAUTHORIZED,
+			detail="Not authenticated, Please login",
+		)
 	credentials_exception = HTTPException(
 		status_code=status.HTTP_401_UNAUTHORIZED,
 		detail="Could not validate credentials",
-		headers={"WWW-Authenticate": "Bearer"},
 	)
 	try:
 		payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 		exp = payload.get("exp")
 		if datetime.utcnow().timestamp() > exp:
 			raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expired",
-            )
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Token expired, please login",
+			)
 		username: str = payload.get("sub")
 		if username is None:
 			raise credentials_exception
 		token_data = TokenData(username=username)
 	except InvalidTokenError:
 		raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Invalid token, please login again",
+			)
 	user = await get_user(db, username=token_data.username)
 	if user is None:
 		raise credentials_exception
@@ -108,9 +115,9 @@ async def get_current_user(request: Request):
 async def verify_reset_password_token(token: str):
 	if not token:
 		raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+			status_code=status.HTTP_401_UNAUTHORIZED,
+			detail="Not authenticated",
+		)
 	credentials_exception = HTTPException(
 		status_code=status.HTTP_401_UNAUTHORIZED,
 		detail="Could not validate credentials",
@@ -120,18 +127,18 @@ async def verify_reset_password_token(token: str):
 		exp = payload.get("exp")
 		if datetime.utcnow().timestamp() > exp:
 			raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expired",
-            )
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Token expired",
+			)
 		username: str = payload.get("sub")
 		if username is None:
 			raise credentials_exception
 		token_data = TokenData(username=username)
 	except InvalidTokenError:
 		raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Invalid token",
+			)
 	user = await get_user(db, username=token_data.username)
 	if user is None:
 		raise credentials_exception

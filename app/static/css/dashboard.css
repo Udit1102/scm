@@ -12,8 +12,9 @@ body {
     color: #333;
     display: flex;
     justify-content: center;
-    align-items: center;
+    /* align-items: center; */
     height: 100vh;
+    margin: 2px;
 }
 
 /* Centering the content inside a container */
@@ -31,11 +32,13 @@ body {
 h1 {
     font-size: 24px;
     margin-bottom: 20px;
+    padding: 10px;
     color: #007bff;
 }
 
 /* Styling the paragraph */
 p {
+    padding: 10px;
     margin-bottom: 20px;
     font-size: 16px;
     color: #666;
@@ -43,6 +46,7 @@ p {
 
 /* Styling links (My Profile, Create Shipment, My Shipments, Logout) */
 a {
+    padding: 10px;
     display: inline-block;
     background-color: #007bff;
     color: white;

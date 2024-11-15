@@ -1,6 +1,6 @@
 async function fetchProfile() {
 	try {
-		const response = await fetch('http://127.0.0.1:8000/users/me/', {
+		const response = await fetch('/users/me/', {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json'

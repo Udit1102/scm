@@ -21,7 +21,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
 	};
 
 	// Send a POST request to the server
-	const response = await fetch('http://127.0.0.1:8000/token', {
+	const response = await fetch('/token', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -30,7 +30,6 @@ document.getElementById('login-form').addEventListener('submit', async function(
 	});
 
 	const result = await response.json();
-	
 	if (response.ok) {
 		// Redirect to a dashboard or another page
 		window.location.href = `/dashboard?username=${encodeURIComponent(username)}`;

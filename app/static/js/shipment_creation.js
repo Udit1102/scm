@@ -21,7 +21,7 @@ document.getElementById("shipment-form").addEventListener("submit", async functi
 	console.log("Request Body:", shipmentData);
 
 	// Make the request and await the response
-	const response = await fetch('http://127.0.0.1:8000/users/create/shipment/', {
+	const response = await fetch('/users/create/shipment/', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'

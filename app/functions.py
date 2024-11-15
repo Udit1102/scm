@@ -55,7 +55,6 @@ async def get_user(db, username: str):
 		return False
 	return UserInDB(**user_dict)
 
-
 async def authenticate_user(db, username: str, password: str):
 	user = await get_user(db, username)
 	if not user:

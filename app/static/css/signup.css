@@ -84,3 +84,15 @@ button:hover {
 form {
     margin-top: 20px;
 }
+.password-container {
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+#error-message {
+    color: red;
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+

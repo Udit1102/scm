@@ -6,13 +6,17 @@ document.getElementById('signup-form').addEventListener('submit', async function
 	const lastName = document.getElementById('last_name').value;
 	const password = document.getElementById('password').value;
 	const confirmPassword = document.getElementById('confirm_password').value;
-
+	const passwordCriteria = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+	if (!passwordCriteria.test(password)) {
+		alert("Password must be at least 8 characters, include an uppercase letter, a number, and a special character.");
+		return;
+	}
 	if (password !== confirmPassword) {
 		alert("Passwords do not match!");
 		return;
 	}
 
-	const response = await fetch('http://127.0.0.1:8000/register', {
+	const response = await fetch('/register', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -28,7 +32,6 @@ document.getElementById('signup-form').addEventListener('submit', async function
 	const result = await response.json();
 	if (response.ok) {
 		alert('Sign-up successful!');
-		// Optionally redirect to a dashboard or another page
 		window.location.href = '/login';
 	} else {
 		if (Array.isArray(result.detail)) {
@@ -39,4 +42,4 @@ document.getElementById('signup-form').addEventListener('submit', async function
 		}
 	}
 });
-    
+
